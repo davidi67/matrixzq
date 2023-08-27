@@ -12,11 +12,6 @@ It must be set using the set_modulus() function before calling functions that se
 
 If the modulus q is not a prime then any operation that involves division (invert, solve) will fail.
 
-MANIFEST
---------
-+ `matrixzq.py`   - Main library source
-+ `matrixzq_test.py` - some tests
-
 -------------------------
 David Ireland  
 <https://www.di-mgt.com.au/contact/>  
