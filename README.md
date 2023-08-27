@@ -12,6 +12,8 @@ It must be set using the set_modulus() function before calling functions that se
 
 If the modulus q is not a prime then any operation that involves division (invert, solve) will fail.
 
+[Read the documentation](https://www.di-mgt.com.au/matrixzqdoc/html/index.html)
+
 We have provided basic Python functions rather than a more-complicated class so you can easily extract and work with the underlying list of lists.
 
 This code was inspired by and some parts are derived from `LinearAlgebraPurePython.py` by Thom Ives  
