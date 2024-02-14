@@ -1,10 +1,11 @@
-# $Id: matrixzq_test.py $
-# $Date: 2023-08-07 08:23Z $
+# $Id: test_matrixzq.py $
+# $Date: 2024-02-13 09:29Z $
+# $Revision: 1.1.0 $
 
 """Tests for matrixzq."""
 
 # ****************************** LICENSE ***********************************
-# Copyright (C) 2023 David Ireland, DI Management Services Pty Limited.
+# Copyright (C) 2023-24 David Ireland, DI Management Services Pty Limited.
 # All rights reserved. <www.di-mgt.com.au> <www.cryptosys.net>
 # The code in this module is licensed under the terms of the MIT license.
 # @license MIT
@@ -14,7 +15,9 @@
 import matrixzq as mzq
 
 
-def main():
+def test_all():
+    """Mostly the same tests at the end of ``matrixzq.py`` but using the prefix ``mzq``."""
+    print("Doing tests in", __file__, "...")
     Z = mzq.zeros_matrix(4, 5)
     mzq.print_matrix(Z)
     I = mzq.identity_matrix(3)
@@ -192,9 +195,10 @@ def main():
     # Check RREF of RREF is same
     print("A'="); mzq.print_matrix(mzq.rref(AR))
 
+    print("matrixzq version =", mzq.__version__)
 
     print("\nALL DONE.")
 
 
 if __name__ == "__main__":
-    main()
+    test_all()

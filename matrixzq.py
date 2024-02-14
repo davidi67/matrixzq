@@ -1,16 +1,9 @@
 # $Id: matrixzq.py $
 
-# $Date: 2023-08-07 08:23Z $
+# $Date: 2024-02-13 11:31Z $
 
-# ****************************** LICENSE ***********************************
-# Copyright (C) 2023 David Ireland, DI Management Services Pty Limited.
-# All rights reserved. <www.di-mgt.com.au> <www.cryptosys.net>
-# The code in this module is licensed under the terms of the MIT license.
-# @license MIT
-# For a copy, see <http://opensource.org/licenses/MIT>
-# **************************************************************************
-
-"""Functions to carry out operations on matrices over Zq (Z/qZ) where q is a positive integer greater than 1.
+"""Functions to carry out operations on matrices over Zq (Z/qZ) where q is a
+positive integer greater than 1.
 
 All matrix elements are expected to be nonnegative integers in the range [0, q-1].
 All computations are carried out modulo q.
@@ -18,23 +11,34 @@ All computations are carried out modulo q.
 A *Matrix* of n rows and m columns is stored as an n x m list of lists.
 
 A *Vector* type is stored as an n x 1 column matrix and can be used in any *Matrix* function.
-There are some specific *Vector* functions which, for convenience, make their underlying n x 1 matrix
-look like a simple vector of length n, for example :py:func:`print_vector`.
+There are some specific *Vector* functions which, for convenience, make their underlying
+n x 1 matrix look like a simple vector of length n, for example :py:func:`print_vector`.
 
 The modulus q is stored as a global variable ``__Q``. It must be set using the
-:py:func:`set_modulus` function before calling functions that set or carry out arithmetic operations
-(add, multiply, etc.) on the matrix elements.
+:py:func:`set_modulus` function before calling functions that set or carry out
+arithmetic operations (add, multiply, etc.) on the matrix elements.
 
-If the modulus q is not a prime then any operation that involves division (invert, solve) will fail.
+If the modulus q is not a prime then the result of any operation that involves
+division (invert, solve) is undefined.
 """
 
-# This code was inspired by and some parts are derived from LinearAlgebraPurePython.py by Thom Ives
+# ****************************** LICENSE ***********************************
+# Copyright (C) 2023-24 David Ireland, DI Management Services Pty Limited.
+# All rights reserved. <www.di-mgt.com.au> <www.cryptosys.net>
+# The code in this module is licensed under the terms of the MIT license.
+# @license MIT
+# For a copy, see <http://opensource.org/licenses/MIT>
+# **************************************************************************
+
+# This code was inspired by and some parts are derived from
+# LinearAlgebraPurePython.py by Thom Ives
 # https://github.com/ThomIves/BasicLinearAlgebraToolsPurePy
 # https://integratedmlai.com/basic-linear-algebra-tools-in-pure-python-without-numpy-or-scipy/
 
 import random
+from io import StringIO
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # Debugging stuff
 DEBUG = False  # Set to True to show debugging output
@@ -66,7 +70,8 @@ def set_modulus(q):
 
 
 def get_modulus():
-    """ Return the global modulus value ``q`` value set by a previous call to :py:func:`set_modulus`."""
+    """ Return the global modulus value ``q`` value set by a previous call to
+    :py:func:`set_modulus`."""
     return __Q
 
 
@@ -139,7 +144,7 @@ def new_vector(v):
     rows = len(v)
     MV = zeros_matrix(rows, 1)
     for i in range(rows):
-        MV[i][0] = v[i]
+        MV[i][0] = v[i] % __Q
 
     return MV
 
@@ -475,7 +480,9 @@ def multiply(A, B):
     if __Q == 0:
         raise RuntimeError("__Q is not set")
     if colsA != rowsB:
-        raise ValueError("Number of A columns %d must equal number of B rows %d." % (colsA, rowsB))
+        raise ValueError(
+            "Number of A columns %d must equal number of B rows %d." \
+                         % (colsA, rowsB))
 
     C = zeros_matrix(rowsA, colsB)
 
@@ -628,6 +635,28 @@ def round2int(x):
         43
     """
     return int(x + 0.5)
+
+
+def roundfrac2int(a: int, b: int) -> int:
+    """Compute rational number ``a/b`` rounded to the nearest integer with ties being rounded up.
+
+    Avoids using floating point arithmetic.
+
+    Args:
+        a (int): Numerator of fraction
+        b (int): Denominator of fraction
+
+    Returns:
+        (int) Rounded integer value (*not* modulo q)
+
+    Examples:
+        >>> roundfrac2int(424999, 10000)
+        42
+        >>> roundfrac2int(425, 10)
+        43
+    """
+    # Compute a/b + 1/2 = (2a+b)/(2b)
+    return int((2 * a + b) // (2 * b))
 
 
 def determinant(A, total=0):
@@ -877,6 +906,27 @@ def matrix_size(M):
     return rows, cols
 
 
+def sprint_matrix(M):
+    """Format a matrix as a string.
+
+    Like :py:func:`print_matrix`
+    but returns a string instead of printing.
+
+    Args:
+        M: Input Matrix.
+
+    Returns:
+        Matrix formatted as a string.
+    """
+    # Use io.StringIO to redirect print() to a string
+    output = StringIO()
+    for row in M:
+        print([x for x in row], file=output)
+    s = output.getvalue().rstrip()
+    output.close()
+    return s
+
+
 def print_matrix(M):
     """Print a matrix.
 
@@ -887,17 +937,38 @@ def print_matrix(M):
         print([x for x in row])
 
 
+def sprint_vector(v):
+    """Format a vector as a string.
+
+    Like :py:func:`print_vector`
+    but returns a string instead of printing.
+
+    Args:
+        v: Input vector.
+
+    Returns:
+        Vector formatted as a string.
+
+    Example:
+        >>> r = new_vector([0, 1, 0, 1, 1, 0, 0])
+        >>> print("r =", sprint_vector(r))
+        r = [0, 1, 0, 1, 1, 0, 0]
+    """
+    rows, cols = matrix_size(v)
+    if cols != 1:
+        raise TypeError("Not a vector.")
+    # Print column vector horizontally
+    s = sprint_matrix(transpose(v))
+    return s
+
+
 def print_vector(v):
     """Print a vector.
 
     Args:
         v: Vector to be printed.
     """
-    rows, cols = matrix_size(v)
-    if cols != 1:
-        raise TypeError("Not a vector.")
-    # Print column vector horizontally
-    print_matrix(transpose(v))
+    print(sprint_vector(v))
 
 
 def print_matrix_latex(M, delim='b'):
@@ -946,15 +1017,22 @@ def random_element():
     return random.randint(0, __Q - 1)
 
 
-def main():
+def test_all():
+    # Tests for matrixzq
+    # Mostly the same tests in ``test_matrixzq.py``
+    print("Doing local tests...")
     Z = zeros_matrix(4, 5)
     print_matrix(Z)
     I = identity_matrix(3)
     print_matrix(I)
-    # Exception if __Q not set
-    # M = new_matrix([[1,2,3],[4,5,6],[7,8,9]])
+    # Exception if __Q not set for new_matrix
+    try:
+        M = new_matrix([[1,2,3],[4,5,6],[7,8,9]])
+    except Exception as e:
+        print("ERROR (expected):", e)
 
     set_modulus(11)
+    print("__Q =", get_modulus())
     NM = new_matrix([[0, 1, 2, 3], [4, 5, 6, 8], [7, 8, 9, 10]])
     print_matrix(NM)
     print("matrix_size =", matrix_size(NM))
@@ -1132,6 +1210,20 @@ def main():
     print_matrix_latex(AR, 'B')
     print_matrix_latex(transpose(AR), '')
 
+    # Round a rational number
+    print(roundfrac2int(424999, 10000))
+    print(roundfrac2int(425, 10))
+    print(roundfrac2int(425999, 10000))
+
+    # Use sprint functions instead of print
+    set_modulus(7)
+    r = new_vector([0,1,2,3,4,5,6,7,8])
+    print("r =", sprint_vector(r))
+    M = new_matrix([[1,2,3], [4,5,6], [2,1,0]])
+    print(f"M:\n{sprint_matrix(M)}")
+
+    print("\nALL DONE: ", __file__)
+
 
 if __name__ == "__main__":
-    main()
+    test_all()
