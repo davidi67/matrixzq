@@ -1,6 +1,6 @@
 # $Id: test_matrixzq.py $
-# $Date: 2024-02-13 09:29Z $
-# $Revision: 1.1.0 $
+# $Date: 2024-10-11 08:03Z $
+# $Revision: 1.1.1 $
 
 """Tests for matrixzq."""
 
@@ -89,7 +89,7 @@ def test_all():
     print("M:"); mzq.print_matrix(M)
     det = mzq.determinant(M)
     print("det(M) =", det)
-    # Add in a previous total
+    # Add in a previous total (fixed in [v1.1.1])
     det = mzq.determinant(M, 3)
     print("3 + det(M) =", det)
     print("-7 mod 11 =", mzq.zp_negate(7))
