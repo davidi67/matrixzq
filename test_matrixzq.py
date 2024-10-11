@@ -89,6 +89,9 @@ def test_all():
     print("M:"); mzq.print_matrix(M)
     det = mzq.determinant(M)
     print("det(M) =", det)
+    # Add in a previous total
+    det = mzq.determinant(M, 3)
+    print("3 + det(M) =", det)
     print("-7 mod 11 =", mzq.zp_negate(7))
     print("-1 mod 11 =", mzq.zp_negate(1))
     M = mzq.new_matrix([[2,3,7],[4,5,10],[9,0,7]])

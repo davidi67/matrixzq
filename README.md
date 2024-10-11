@@ -21,6 +21,9 @@ We have provided basic Python functions rather than a more-complicated class so 
 
 ## History
 
+* v1.1.1 (2024-10-11)
+    - Fixed error in determinant method when adding prior total to a 2 x 2 matrix.
+
 * v1.1.0 (2024-02-13)
     - Added new functions `sprint_matrix` and `sprint_vector` to print directly to strings.
 	- Added `roundfrac2int` to round a fraction to an integer without using float operations.
@@ -36,4 +39,4 @@ This code was inspired by and some parts are derived from `LinearAlgebraPurePyth
 -------------------------
 David Ireland  
 <https://www.di-mgt.com.au/contact/>  
-This document last updated 2024-02-13  
+This document last updated 2024-10-11  
