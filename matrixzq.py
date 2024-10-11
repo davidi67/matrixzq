@@ -1,6 +1,6 @@
 # $Id: matrixzq.py $
 
-# $Date: 2024-02-13 11:31Z $
+# $Date: 2024-10-11 05:59Z $
 
 """Functions to carry out operations on matrices over Zq (Z/qZ) where q is a
 positive integer greater than 1.
@@ -38,7 +38,7 @@ division (invert, solve) is undefined.
 import random
 from io import StringIO
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 # Debugging stuff
 DEBUG = False  # Set to True to show debugging output
@@ -677,7 +677,7 @@ def determinant(A, total=0):
     if len(A) == 2 and len(A[0]) == 2:
         # Simple solution for 2 x 2 matrix
         val = zp_subtract(zp_mult(A[0][0], A[1][1]), zp_mult(A[1][0], A[0][1]))
-        return val % __Q
+        return (val + total) % __Q
 
     for fc in indices:
         As = copy(A)
