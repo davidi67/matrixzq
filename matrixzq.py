@@ -1,6 +1,6 @@
 # $Id: matrixzq.py $
 
-# $Date: 2024-10-11 05:59Z $
+# $Date: 2026-10-07 08:02Z $
 
 """Functions to carry out operations on matrices over Zq (Z/qZ) where q is a
 positive integer greater than 1.
@@ -23,10 +23,10 @@ division (invert, solve) is undefined.
 """
 
 # ****************************** LICENSE ***********************************
-# Copyright (C) 2023-24 David Ireland, DI Management Services Pty Limited.
-# All rights reserved. <www.di-mgt.com.au> <www.cryptosys.net>
+# Copyright (C) 2023-26 David Ireland, DI Management Services Pty Limited.
+# All rights reserved. <https://di-mgt.com.au> <https://cryptosys.net>
 # The code in this module is licensed under the terms of the MIT license.
-# @license MIT
+# SPDX-License-Identifier: MIT
 # For a copy, see <http://opensource.org/licenses/MIT>
 # **************************************************************************
 
@@ -38,7 +38,7 @@ division (invert, solve) is undefined.
 import random
 from io import StringIO
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 
 # Debugging stuff
 DEBUG = False  # Set to True to show debugging output
@@ -70,44 +70,78 @@ def set_modulus(q):
 
 
 def get_modulus():
-    """ Return the global modulus value ``q`` value set by a previous call to
+    """ Return the global modulus value ``q`` value set by the last call to
     :py:func:`set_modulus`."""
     return __Q
 
 
+def _matrix_shape(M, name="M"):
+    """Validate a non-empty rectangular matrix and return (rows, columns)."""
+    if not isinstance(M, list):
+        raise TypeError(f"{name} must be a list of lists")
+    if not M:
+        raise ValueError(f"{name} must not be empty")
+    if any(not isinstance(row, list) for row in M):
+        raise TypeError(f"{name} must be a list of lists")
+
+    cols = len(M[0])
+    if cols == 0:
+        raise ValueError(f"{name} must have at least one column")
+    if any(len(row) != cols for row in M):
+        raise ValueError(f"{name} must be rectangular")
+
+    return len(M), cols
+
+
+def _issquare(A):
+    rows, cols = _matrix_shape(A, "A")
+    return rows == cols
+
+
+def matrix_size(M):
+    """Return size (rows, cols) of a non-empty rectangular matrix."""
+    return _matrix_shape(M)
+
+
 def new_matrix(M):
-    """Create a new matrix given a list of lists.
-
-    Args:
-        M: list of lists.
-
-    Returns:
-        New matrix.
-
-    Example:
-        >>> set_modulus(11)
-        >>> NM = new_matrix([[0,1,2,3],[4,5,6,8],[7,8,9,10]])
-        >>> print_matrix(NM)
-        [0, 1, 2, 3]
-        [4, 5, 6, 8]
-        [7, 8, 9, 10]
-        >>> print("matrix_size =", matrix_size(NM))
-        matrix_size = (3, 4)
-    """
-    # Expecting a list of lists
-    # - each element is reduced modulo __Q
+    """Create a new matrix given a rectangular list of lists."""
     if __Q == 0:
         raise RuntimeError("__Q is not set")
-    if not all(isinstance(i, list) for i in M):
-        raise TypeError("Expecting a list of lists")
-    rows = len(M)
-    cols = len(M[0])
+
+    rows, cols = _matrix_shape(M)
     MC = zeros_matrix(rows, cols)
     for i in range(rows):
         for j in range(cols):
             MC[i][j] = M[i][j] % __Q
-
     return MC
+
+
+def new_matrix_from_string(s, n):
+    """Create a new matrix from a string of space-separated integers.
+    
+    Args:
+        s (str): String of space-separated integers
+        n (int): Number of columns in the resulting matrix
+
+    Returns:
+        New matrix of size ``rows x n`` where rows is determined by the number of integers in the string.
+
+    Raises:
+        ValueError: If the string does not contain a valid number of integers for the specified number of columns.  
+
+    Example:
+        >>> set_modulus(11)
+        >>> s = "1 2 3 4 5 6 7 8 9"
+        >>> M = new_matrix_from_string(s, 3)
+        >>> print("M:"); print_matrix(M)
+        M:
+        [1, 2, 3]
+        [4, 5, 6]
+        [7, 8, 9]
+    """
+    data = list(map(int, s.split()))
+    matrix = [data[i:i+n] for i in range(0, len(data), n)]
+    return new_matrix(matrix)
 
 
 def new_vector(v):
@@ -151,10 +185,6 @@ def new_vector(v):
 
 def _isavector(v):
     return len(v[0]) == 1
-
-
-def _issquare(A):
-    return len(A) == len(A[0])
 
 
 def set_element(M, row, col, value):
@@ -596,7 +626,7 @@ def zp_inverse(a):
         raise ValueError("Zero has no inverse!")
     inv = zp_modinv(a, __Q)
     if (inv == 0):
-        raise RuntimeError("Failed to compute inverse of " + a)
+        raise RuntimeError(f"Failed to compute inverse of {a}")
 
     return inv
 
@@ -674,6 +704,9 @@ def determinant(A, total=0):
     if __Q == 0:
         raise RuntimeError("__Q is not set")
 
+    if len(A) == 1 and len(A[0]) == 1:
+        return (A[0][0] + total) % __Q
+
     if len(A) == 2 and len(A[0]) == 2:
         # Simple solution for 2 x 2 matrix
         val = zp_subtract(zp_mult(A[0][0], A[1][1]), zp_mult(A[1][0], A[0][1]))
@@ -726,18 +759,33 @@ def invert(A):
     IM = copy(I)
 
     # Section 3: Perform row operations
-    indices = list(range(n))  # to allow flexible row referencing ***
     for fd in range(n):  # fd stands for focus diagonal
+        # Find a nonzero pivot at or below the diagonal.
+        pivot_row = next(
+            (row for row in range(fd, n) if AM[row][fd] != 0),
+            None,
+        )
+        if pivot_row is None:
+            raise ArithmeticError("Singular Matrix!")
+
+        # Keep the augmented identity in sync with the row swap.
+        if pivot_row != fd:
+            AM = row_swap(AM, fd, pivot_row)
+            IM = row_swap(IM, fd, pivot_row)
+
         fdScaler = zp_inverse(AM[fd][fd])
-        # fdScaler = 1.0 / AM[fd][fd]
-        # FIRST: scale fd row with fd inverse.
-        for j in range(n):  # Use j to indicate column looping.
+
+        # Scale the pivot row so the pivot becomes one.
+        for j in range(n):
             AM[fd][j] = zp_mult(AM[fd][j], fdScaler)
             IM[fd][j] = zp_mult(IM[fd][j], fdScaler)
-        # SECOND: operate on all rows except fd row as follows:
-        for i in indices[0:fd] + indices[fd + 1:]:  # *** skip row with fd in it.
+
+        # Eliminate the pivot column in every other row.
+        for i in range(n):
+            if i == fd:
+                continue
             crScaler = AM[i][fd]  # cr stands for "current row".
-            for j in range(n):  # cr - crScaler * fdRow, but one element at a time.
+            for j in range(n):
                 AM[i][j] = zp_subtract(AM[i][j], zp_mult(crScaler, AM[fd][j]))
                 IM[i][j] = zp_subtract(IM[i][j], zp_mult(crScaler, IM[fd][j]))
 
@@ -1042,7 +1090,7 @@ def test_all():
     A = copy(I)
     print("Copy I:")
     print_matrix(A)
-    M = new_matrix([[1,2,3],[4,5,6],[7,8,9],[10,11,12,13]])
+    M = new_matrix([[1,2,3],[4,5,6],[7,8,9],[10,11,12]])
     print("M:")
     print_matrix(M)
     print("M^T:")
@@ -1099,6 +1147,19 @@ def test_all():
     print("M:"); print_matrix(M)
     det = determinant(M)
     print("det(M) =", det)
+
+    # Invert a matrix with a leading 0 element in the first row [v1.2]
+    set_modulus(2)
+    M = new_matrix([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+    print("M:"); print_matrix(M)
+    IM = invert(M) 
+    print("inv(M):"); print_matrix(IM)
+
+    # Create a matrix from a string [v1.2]
+    set_modulus(11)
+    s = "1 2 3 4 5 6 7 8 9"
+    M = new_matrix_from_string(s, 3)
+    print("M:"); print_matrix(M)
 
     set_modulus(11)
     v = new_vector([1,2,3,4,5])

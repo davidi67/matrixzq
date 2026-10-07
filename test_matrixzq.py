@@ -1,14 +1,14 @@
 # $Id: test_matrixzq.py $
-# $Date: 2024-10-11 08:03Z $
-# $Revision: 1.1.1 $
+# $Date: 2026-10-07 08:02Z $
+# $Revision: 1.2.0 $
 
 """Tests for matrixzq."""
 
 # ****************************** LICENSE ***********************************
-# Copyright (C) 2023-24 David Ireland, DI Management Services Pty Limited.
-# All rights reserved. <www.di-mgt.com.au> <www.cryptosys.net>
+# Copyright (C) 2023-26 David Ireland, DI Management Services Pty Limited.
+# All rights reserved. <https://di-mgt.com.au> <https://cryptosys.net>
 # The code in this module is licensed under the terms of the MIT license.
-# @license MIT
+# SPDX-License-Identifier: MIT
 # For a copy, see <http://opensource.org/licenses/MIT>
 # **************************************************************************
 
@@ -38,7 +38,7 @@ def test_all():
     A = mzq.copy(I)
     print("Copy I:")
     mzq.print_matrix(A)
-    M = mzq.new_matrix([[1,2,3],[4,5,6],[7,8,9],[10,11,12,13]])
+    M = mzq.new_matrix([[1,2,3],[4,5,6],[7,8,9],[10,11,12]])
     print("M:")
     mzq.print_matrix(M)
     print("M^T:")
@@ -98,6 +98,13 @@ def test_all():
     print("M:"); mzq.print_matrix(M)
     det = mzq.determinant(M)
     print("det(M) =", det)
+
+    # Invert a matrix with a leading 0 element in the first row [v1.2.0]
+    mzq.set_modulus(2)
+    M = mzq.new_matrix([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+    print("M:"); mzq.print_matrix(M)
+    IM = mzq.invert(M) 
+    print("inv(M):"); mzq.print_matrix(IM)
 
     mzq.set_modulus(11)
     v = mzq.new_vector([1,2,3,4,5])

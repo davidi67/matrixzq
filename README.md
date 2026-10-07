@@ -14,12 +14,18 @@ If the modulus q is not a prime then any operation that involves division (inver
 
 ## Documentation
 
-[Read the documentation](https://www.di-mgt.com.au/matrixzqdoc/html/index.html)
+[Read the documentation](https://di-mgt.com.au/matrixzqdoc/html/index.html)
 
 We have provided basic Python functions rather than a more-complicated class so you can easily extract and work with the underlying list of lists.
 
 
 ## History
+
+* v1.2.0 (2026-10-07)
+    - Fixed problem in `invert` when leading element is zero
+    - Fixed `determinant` for 1x1 matrix
+    - Added stricter check that input to `new_matrix` is properly rectangular
+    - Added method `new_matrix_from_string`
 
 * v1.1.1 (2024-10-11)
     - Fixed error in determinant method when adding prior total to a 2 x 2 matrix.
@@ -38,5 +44,5 @@ This code was inspired by and some parts are derived from `LinearAlgebraPurePyth
 
 -------------------------
 David Ireland  
-<https://www.di-mgt.com.au/contact/>  
-This document last updated 2024-10-11  
+<https://di-mgt.com.au/contact/>  
+This document last updated 2026-10-07   
